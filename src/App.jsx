@@ -3,6 +3,8 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
 import Login from "./auth/login";
 import Signup from "./auth/signuo";
+import ForgotPassword from "./auth/ForgotPAssword";
+import PasswordReset from "./auth/PasswordReset";
 
 function Placeholder({ title }) {
   return (
@@ -20,9 +22,9 @@ export default function App() {
     <BrowserRouter>
       <Routes>
 
-        <Route element={<Signup />}>
+        <Route element={<PasswordReset />}>
 
-          <Route path="/" element={<Signup />} />
+          <Route path="/" element={<PasswordReset />} />
 
           <Route
             path="/wallets"
