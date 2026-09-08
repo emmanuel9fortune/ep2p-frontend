@@ -8,6 +8,7 @@ import {
   Check,
   Grid2X2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function ForgotPassword() {
   const [showPassword, setShowPassword] = useState(false);
@@ -348,8 +349,8 @@ export default function ForgotPassword() {
                 <div></div>
 
 
-                <button
-                  type="button"
+                <Link
+                  to={'/login'}
                   className="
                     text-[11px]
                     text-violet-400
@@ -358,7 +359,7 @@ export default function ForgotPassword() {
                   "
                 >
                   Back to login?
-                </button>
+                </Link>
 
               </div>
 
@@ -438,8 +439,8 @@ export default function ForgotPassword() {
                   Don't have an account?
                 </span>
 
-                <button
-                  type="button"
+                <Link
+                  to={'/signup'}
                   className="
                     ml-2
                     text-[12px]
@@ -448,10 +449,9 @@ export default function ForgotPassword() {
                     transition
                     hover:text-violet-300
                   "
-                  onClick={() => window.location.href = "/signup"}
                 >
                   Sign Up
-                </button>
+                </Link>
 
               </div>
 

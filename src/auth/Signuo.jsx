@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Check,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Signup() {
   const [step, setStep] = useState(1);
@@ -794,7 +795,7 @@ export default function Signup() {
 
           <p
             className="
-              mt-7
+              mt-15
               text-center
               text-[11px]
               text-white/30
@@ -802,7 +803,7 @@ export default function Signup() {
           >
             Already have an account?{" "}
 
-            <button
+            <Link to={'/login'}
               type="button"
               className="
                 text-indigo-300
@@ -811,7 +812,7 @@ export default function Signup() {
               "
             >
               Login
-            </button>
+            </Link>
           </p>
 
         </div>

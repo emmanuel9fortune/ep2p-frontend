@@ -5,6 +5,7 @@ import Login from "./auth/login";
 import Signup from "./auth/signuo";
 import ForgotPassword from "./auth/ForgotPAssword";
 import PasswordReset from "./auth/PasswordReset";
+import OTP from "./auth/OtpVerification";
 
 function Placeholder({ title }) {
   return (
@@ -22,33 +23,34 @@ export default function App() {
     <BrowserRouter>
       <Routes>
 
-        <Route element={<PasswordReset />}>
+        <Route>
+        {/* <Route element={<OTP />}> */}
 
-          <Route path="/" element={<PasswordReset />} />
+          <Route path="/" element={<Dashboard />} />
 
           <Route
-            path="/wallets"
-            element={<Placeholder title="Wallets" />}
+            path="/signup"
+            element={<Signup />}
           />
 
           <Route
-            path="/trade"
-            element={<Placeholder title="Buy / Sell" />}
+            path="/login"
+            element={<Login />}
           />
 
           <Route
-            path="/transactions"
-            element={<Placeholder title="Transactions" />}
+            path="/forgot-password"
+            element={<ForgotPassword />}
           />
 
           <Route
-            path="/deposit"
-            element={<Placeholder title="Deposit" />}
+            path="/otp-verification"
+            element={<OTP />}
           />
 
           <Route
-            path="/withdraw"
-            element={<Placeholder title="Withdraw" />}
+            path="/password-reset"
+            element={<PasswordReset />}
           />
 
           <Route

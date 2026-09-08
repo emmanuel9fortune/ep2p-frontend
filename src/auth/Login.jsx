@@ -8,6 +8,7 @@ import {
   Check,
   Grid2X2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -27,7 +28,47 @@ export default function Login() {
       <div className="pointer-events-none absolute -right-32 top-[25%] h-[500px] w-[500px] rounded-full bg-violet-600/15 blur-[150px]" />
 
       <div className="pointer-events-none absolute bottom-[-200px] left-1/2 h-[500px] w-[600px] -translate-x-1/2 rounded-full bg-indigo-600/10 blur-[160px]" />
+{/* Animated space background */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
 
+        {/* Stars */}
+        {Array.from({ length: 45 }).map((_, i) => (
+          <span
+            key={i}
+            className="absolute h-[2px] w-[2px] rounded-full bg-white/50 animate-twinkle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
+              animationDuration: `${3 + Math.random() * 4}s`,
+              opacity: 0.2 + Math.random() * 0.5,
+            }}
+          />
+        ))}
+
+        {/* Larger glowing stars */}
+        {Array.from({ length: 8 }).map((_, i) => (
+          <span
+            key={`glow-${i}`}
+            className="
+              absolute
+              h-[3px]
+              w-[3px]
+              rounded-full
+              bg-indigo-200
+              shadow-[0_0_8px_rgba(165,180,252,0.8)]
+              animate-twinkle
+            "
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 4}s`,
+              animationDuration: `${4 + Math.random() * 3}s`,
+            }}
+          />
+        ))}
+
+      </div>
 
       {/* =========================================================
           DECORATIVE BACKGROUND WAVES
@@ -480,8 +521,8 @@ export default function Login() {
                 </button>
 
 
-                <button
-                  type="button"
+                <Link
+                  to={'/forgot-password'}
                   className="
                     text-[11px]
                     text-violet-400
@@ -490,7 +531,7 @@ export default function Login() {
                   "
                 >
                   Forgot password?
-                </button>
+                </Link>
 
               </div>
 
@@ -626,7 +667,8 @@ export default function Login() {
                   Don't have an account?
                 </span>
 
-                <button
+                <Link
+                  to={'/signup'}
                   type="button"
                   className="
                     ml-2
@@ -636,10 +678,9 @@ export default function Login() {
                     transition
                     hover:text-violet-300
                   "
-                  onClick={() => window.location.href = "/signup"}
                 >
                   Sign Up
-                </button>
+                </Link>
 
               </div>
 
