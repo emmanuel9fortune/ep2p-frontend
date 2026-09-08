@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Dashboard from "./pages/Dashboard";
-import Login from "./auth/login";
-import Signup from "./auth/signuo";
+import Login from "./auth/Signin";
+import Signup from "./auth/SignUp";
 import ForgotPassword from "./auth/ForgotPAssword";
 import PasswordReset from "./auth/PasswordReset";
 import OTP from "./auth/OtpVerification";
