@@ -7,11 +7,16 @@ import {
   ArrowRight,
   ArrowLeft,
   Check,
+  KeyRound,
+  EyeOff,
+  Eye,
+  LockKeyhole,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export default function Signup() {
   const [step, setStep] = useState(1);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -20,6 +25,7 @@ export default function Signup() {
     lastName: "",
     dob: "",
     username: "",
+    password: "",
   });
 
   const updateField = (field, value) => {
@@ -618,27 +624,32 @@ export default function Signup() {
 
             {/* ================= STEP 4 ================= */}
 
-            {step === 4 && (
+
+              {/* =================================================
+                  PASSWORD
+              ================================================= */}
+            {
+              step === 4 && (
               <div className="transition-all duration-300">
+              <div
+                className="
+                  group
+                  relative
+                  mt-4
+                  rounded-[20px]
+                  border
+                  border-indigo-400/30
+                  bg-[#0b1429]/80
+                  p-3.5
+                  transition
+                  duration-200
+                  focus-within:border-indigo-400/70
+                  focus-within:bg-[#0e1831]
+                  focus-within:shadow-[0_0_30px_rgba(79,70,229,0.10)]
+                "
+              >
 
-                <div className="mb-3">
-
-                  <label
-                    htmlFor="username"
-                    className="
-                      block
-                      text-[11px]
-                      font-medium
-                      text-indigo-200/90
-                      text-left
-                    "
-                  >
-                    Choose a username
-                  </label>
-
-                </div>
-
-                <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.025] px-4 transition-all duration-200 focus-within:border-indigo-400/30 focus-within:bg-indigo-500/[0.04] py-2">
+                <div className="flex items-start gap-3">
 
                   <div
                     className="
@@ -655,54 +666,164 @@ export default function Signup() {
                       text-indigo-200
                     "
                   >
-                    <UserRound
-                      size={20}
-                      strokeWidth={1.6}
-                    />
+                    <KeyRound size={20} strokeWidth={1.6} />
                   </div>
 
-                  <input
-                    id="username"
-                    type="text"
-                    value={formData.username}
-                    onChange={(e) =>
-                      updateField(
-                        "username",
-                        e.target.value
-                      )
-                    }
-                    placeholder="Choose a username"
-                    autoComplete="username"
-                    autoFocus
+                  <div className="min-w-0 flex-1">
+
+                    <label
+                      htmlFor="password"
+                      className="block text-[11px] font-medium text-indigo-200/90 w-full text-left"
+                    >
+                      Password
+                    </label>
+
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                      className="
+                        mt-1
+                        block
+                        w-full
+                        border-none
+                        bg-transparent
+                        p-0
+                        pr-8
+                        text-[13px]
+                        text-white
+                        outline-none
+                        placeholder:text-white/25
+                      "
+                    />
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
                     className="
-                      h-11
-                      min-w-0
-                      flex-1
-                      border-none
-                      bg-transparent
-                      p-0
-                      text-[13px]
-                      text-white
-                      outline-none
-                      placeholder:text-white/25
+                      absolute
+                      right-4
+                      top-1/2
+                      -translate-y-1/2
+                      text-white/30
+                      transition
+                      hover:text-white/70
                     "
-                  />
+                  >
+                    {showPassword ? (
+                      <EyeOff size={17} strokeWidth={1.5} />
+                    ) : (
+                      <Eye size={17} strokeWidth={1.5} />
+                    )}
+                  </button>
 
                 </div>
 
-                <p
-                  className="
-                    mt-3
-                    text-[10px]
-                    leading-4
-                    text-white/25
-                  "
-                >
-                  Your username will be visible to other users
-                  on the platform.
-                </p>
+              </div>
+
+
+              {/* // /* =================================================
+              //     CONFIRM PASSWORD
+              // ================================================= */}
+
+              <div
+                className="
+                  group
+                  relative
+                  mt-4
+                  rounded-[20px]
+                  border
+                  border-indigo-400/30
+                  bg-[#0b1429]/80
+                  p-3.5
+                  transition
+                  duration-200
+                  focus-within:border-indigo-400/70
+                  focus-within:bg-[#0e1831]
+                  focus-within:shadow-[0_0_30px_rgba(79,70,229,0.10)]
+                "
+              >
+
+                <div className="flex items-start gap-3">
+
+                  <div
+                    className="
+                      flex
+                      h-11
+                      w-11
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-full
+                      border
+                      border-blue-400/10
+                      bg-blue-500/[0.08]
+                      text-indigo-200
+                    "
+                  >
+                    <LockKeyhole size={20} strokeWidth={1.6} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+
+                    <label
+                      htmlFor="password"
+                      className="block text-[11px] font-medium text-indigo-200/90 w-full text-left"
+                    >
+                      Confirm Password
+                    </label>
+
+                    <input
+                      id="password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Confirm password"
+                      autoComplete="current-password"
+                      className="
+                        mt-1
+                        block
+                        w-full
+                        border-none
+                        bg-transparent
+                        p-0
+                        pr-8
+                        text-[13px]
+                        text-white
+                        outline-none
+                        placeholder:text-white/25
+                      "
+                    />
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="
+                      absolute
+                      right-4
+                      top-1/2
+                      -translate-y-1/2
+                      text-white/30
+                      transition
+                      hover:text-white/70
+                    "
+                  >
+                    {showPassword ? (
+                      <EyeOff size={17} strokeWidth={1.5} />
+                    ) : (
+                      <Eye size={17} strokeWidth={1.5} />
+                    )}
+                  </button>
+
+                </div>
 
               </div>
+            </div>
             )}
 
             {/* ================= NAVIGATION ================= */}
