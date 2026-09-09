@@ -1,612 +1,413 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+
 import {
-  ShieldCheck,
-  ArrowLeft,
-  ArrowRight,
-  RefreshCw,
+    ArrowLeft,
+    Check,
+    Mail,
 } from "lucide-react";
 
-export default function OTP() {
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [timeLeft, setTimeLeft] = useState(60);
-  const [isVerifying, setIsVerifying] = useState(false);
+import {
+    Link,
+    useLocation,
+    useNavigate,
+} from "react-router-dom";
 
-  const inputRefs = useRef([]);
+import { verifyEmailOTP, resendEmailOTP } from "../services/authService";
+import { useAuth } from "./authContext";
 
-  // Countdown
-  useEffect(() => {
-    if (timeLeft <= 0) return;
+export default function OtpVerification() {
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
+    const { login } = useAuth();
 
-    return () => clearInterval(timer);
-  }, [timeLeft]);
+    const email =
+        location.state?.email || "";
 
-  // Focus first input on page load
-  useEffect(() => {
-    inputRefs.current[0]?.focus();
-  }, []);
+    const [otp, setOtp] =
+        useState("");
 
-  const handleChange = (index, value) => {
-    // Only allow numbers
-    if (!/^\d*$/.test(value)) return;
+    const [loading, setLoading] =
+        useState(false);
 
-    const newOtp = [...otp];
+    const [error, setError] =
+        useState("");
 
-    // Only keep the last character
-    newOtp[index] = value.slice(-1);
+    useEffect(() => {
+        if (!email) {
+            navigate("/signup", {
+                replace: true,
+            });
+        }
+    }, [email, navigate]);
 
-    setOtp(newOtp);
+    const handleChange = (event) => {
+        const value =
+            event.target.value
+                .replace(/\D/g, "")
+                .slice(0, 6);
 
-    // Move to next box
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
+        setOtp(value);
+        setError("");
+    };
 
-  const handleKeyDown = (index, e) => {
-    // Move backwards on backspace
-    if (
-      e.key === "Backspace" &&
-      !otp[index] &&
-      index > 0
-    ) {
-      inputRefs.current[index - 1]?.focus();
-    }
+    const handleSubmit = async (event) => {
+        event.preventDefault();
 
-    // Move left
-    if (e.key === "ArrowLeft" && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+        if (otp.length !== 6) {
+            setError(
+                "Please enter the 6-digit verification code."
+            );
 
-    // Move right
-    if (e.key === "ArrowRight" && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
+            return;
+        }
 
-  // Handle pasting a complete OTP
-  const handlePaste = (e) => {
-    e.preventDefault();
+        setLoading(true);
+        setError("");
 
-    const pastedData = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, 6);
+        try {
+            const data =
+                await verifyEmailOTP({
+                    email,
+                    otp,
+                });
 
-    if (!pastedData) return;
+            console.log("OTP response:", data);
+            console.log("Token:", data?.token);
+            console.log("User:", data?.user);
+            console.log("Navigating to dashboard...");
+            console.log(typeof data.token);
 
-    const newOtp = ["", "", "", "", "", ""];
+            sessionStorage.setItem(
+                "accessToken",
+                data.token
+            );
 
-    pastedData.split("").forEach((digit, index) => {
-      newOtp[index] = digit;
-    });
+            console.log(
+                "Token immediately after saving:",
+                sessionStorage.getItem("accessToken")
+            );
 
-    setOtp(newOtp);
+            if (data?.user) {
+                login({
+                    user: data.user,
+                    accessToken: data.token,
+                });
+            }
 
-    const nextIndex = Math.min(pastedData.length, 5);
+            navigate("/dashboard", {
+                replace: true,
+            });
+        } catch (error) {
+            setError(
+                error.message ||
+                "Invalid verification code."
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    inputRefs.current[nextIndex]?.focus();
-  };
+    const [resending, setResending] =
+        useState(false);
 
-  const resendOTP = () => {
-    if (timeLeft > 0) return;
+    const [resendMessage, setResendMessage] =
+        useState("");
 
-    // Reset OTP
-    setOtp(["", "", "", "", "", ""]);
+    const [resendError, setResendError] =
+        useState("");
 
-    // Restart timer
-    setTimeLeft(60);
+    const handleResendOTP = async () => {
+        if (!email || resending) {
+            return;
+        }
 
-    // Focus first input
-    inputRefs.current[0]?.focus();
+        setResending(true);
+        setResendMessage("");
+        setResendError("");
 
-    // Send new OTP to backend here
-    console.log("Resending OTP...");
-  };
+        try {
+            const data = await resendEmailOTP({
+                email
+            });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+            setOtp("");
 
-    const code = otp.join("");
+            setResendMessage(
+                data.message ||
+                "A new verification code has been sent."
+            );
 
-    if (code.length !== 6) {
-      return;
-    }
+        } catch (error) {
+            console.error(
+                "Resend OTP error:",
+                error
+            );
 
-    setIsVerifying(true);
+            setResendError(
+                error.message ||
+                "Unable to resend verification code."
+            );
 
-    console.log("OTP:", code);
+        } finally {
+            setResending(false);
+        }
+    };
 
-    // Verify OTP with your backend here
-    //
-    // Example:
-    //
-    // const response = await fetch("/api/verify-otp", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     otp: code,
-    //   }),
-    // });
-
-    setTimeout(() => {
-      setIsVerifying(false);
-    }, 1500);
-  };
-
-  const isComplete = otp.every((digit) => digit !== "");
-
-  return (
-    <main
-      className="
-        relative
-        min-h-screen
-        w-full
-        overflow-hidden
-        bg-[#070b16]
-        text-white
-      "
-    >
-      {/* ================================================= */}
-      {/* ANIMATED SPACE BACKGROUND */}
-      {/* ================================================= */}
-
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-
-        {/* Small stars */}
-        {Array.from({ length: 45 }).map((_, i) => (
-          <span
-            key={i}
+    return (
+        <main
             className="
-              absolute
-              h-[2px]
-              w-[2px]
-              rounded-full
-              bg-white/50
-              animate-twinkle
-            "
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${3 + Math.random() * 4}s`,
-              opacity: 0.2 + Math.random() * 0.5,
-            }}
-          />
-        ))}
-
-        {/* Glowing stars */}
-        {Array.from({ length: 8 }).map((_, i) => (
-          <span
-            key={`glow-${i}`}
-            className="
-              absolute
-              h-[3px]
-              w-[3px]
-              rounded-full
-              bg-indigo-200
-              shadow-[0_0_8px_rgba(165,180,252,0.8)]
-              animate-twinkle
-            "
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 4}s`,
-              animationDuration: `${4 + Math.random() * 3}s`,
-            }}
-          />
-        ))}
-
-      </div>
-
-      {/* ================================================= */}
-      {/* BACKGROUND GLOWS */}
-      {/* ================================================= */}
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          -left-32
-          -top-32
-          h-80
-          w-80
-          rounded-full
-          bg-indigo-600/[0.08]
-          blur-[100px]
-        "
-      />
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          -bottom-40
-          -right-32
-          h-96
-          w-96
-          rounded-full
-          bg-blue-500/[0.06]
-          blur-[120px]
-        "
-      />
-
-      <div
-        className="
-          pointer-events-none
-          absolute
-          left-1/2
-          top-1/2
-          h-72
-          w-72
-          -translate-x-1/2
-          -translate-y-1/2
-          rounded-full
-          bg-indigo-500/[0.025]
-          blur-[100px]
-        "
-      />
-
-      {/* ================================================= */}
-      {/* CONTENT */}
-      {/* ================================================= */}
-
-      <div
-        className="
-          relative
-          z-10
-          mx-auto
-          flex
-          min-h-screen
-          w-full
-          max-w-md
-          items-center
-          justify-center
-          px-5
-          py-10
-        "
-      >
-
-        <div className="w-full">
-
-          {/* ================================================= */}
-          {/* LOGO */}
-          {/* ================================================= */}
-
-          <div className="mb-8 flex justify-center">
-
-            <div
-              className="
-                flex
-                h-12
-                w-12
-                items-center
-                justify-center
-                rounded-full
-                border
-                border-blue-400/10
-                bg-blue-500/[0.08]
-                text-indigo-200
-                shadow-[0_0_35px_rgba(99,102,241,0.08)]
-              "
-            >
-              <span className="text-lg font-semibold">
-                L
-              </span>
-            </div>
-
-          </div>
-
-          {/* ================================================= */}
-          {/* HEADER */}
-          {/* ================================================= */}
-
-          <div className="mb-8 text-center">
-
-            <p
-              className="
-                mb-2
-                text-[10px]
-                font-medium
-                uppercase
-                tracking-[0.25em]
-                text-indigo-300/45
-              "
-            >
-              Verification
-            </p>
-
-            <h1
-              className="
-                text-2xl
-                font-semibold
-                tracking-tight
+                min-h-screen
+                bg-[#070b16]
+                px-5
+                py-10
                 text-white
-              "
-            >
-              Verify your account
-            </h1>
-
-            <p
-              className="
-                mx-auto
-                mt-2
-                w-full
-                text-[12px]
-                leading-5
-                text-white/35
-                text-center
-              "
-            >
-              Enter the 6-digit verification code
-              we sent to your email.
-            </p>
-
-          </div>
-
-          {/* ================================================= */}
-          {/* VERIFICATION ICON */}
-          {/* ================================================= */}
-
-          <div className="mb-7 flex justify-center">
-
+            "
+        >
             <div
-              className="
-                flex
-                h-16
-                w-16
-                items-center
-                justify-center
-                rounded-2xl
-                border
-                border-indigo-400/10
-                bg-indigo-500/[0.07]
-                text-indigo-200
-                shadow-[0_0_35px_rgba(99,102,241,0.08)]
-              "
-            >
-              <ShieldCheck
-                size={30}
-                strokeWidth={1.3}
-              />
-            </div>
-
-          </div>
-
-          {/* ================================================= */}
-          {/* OTP FORM */}
-          {/* ================================================= */}
-
-          <form onSubmit={handleSubmit}>
-
-            <div className="mb-3">
-
-              <label
                 className="
-                  block
-                  text-[11px]
-                  font-medium
-                  text-indigo-200/90
-                  text-left
-                "
-              >
-                Verification code
-              </label>
-
-            </div>
-
-            {/* OTP BOXES */}
-
-            <div
-              className="
-                mt-3
-                flex
-                w-full
-                justify-between
-                gap-2
-              "
-            >
-
-              {otp.map((digit, index) => (
-
-                <input
-                  key={index}
-                  ref={(element) => {
-                    inputRefs.current[index] = element;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) =>
-                    handleChange(
-                      index,
-                      e.target.value
-                    )
-                  }
-                  onKeyDown={(e) =>
-                    handleKeyDown(index, e)
-                  }
-                  onPaste={handlePaste}
-                  className="
-                    h-[54px]
-                    w-full
-                    rounded-xl
-                    border
-                    border-white/[0.09]
-                    bg-white/[0.025]
-                    text-center
-                    text-lg
-                    font-medium
-                    text-white
-                    outline-none
-                    transition-all
-                    duration-200
-                    focus:border-indigo-400/40
-                    focus:bg-indigo-500/[0.05]
-                    focus:shadow-[0_0_20px_rgba(99,102,241,0.08)]
-                  "
-                />
-
-              ))}
-
-            </div>
-
-            {/* ================================================= */}
-            {/* TIMER */}
-            {/* ================================================= */}
-
-            <div className="mt-5 flex items-center justify-between">
-
-              <p
-                className="
-                  text-[10px]
-                  text-white/25
-                "
-              >
-                Didn't receive the code?
-              </p>
-
-              {timeLeft > 0 ? (
-
-                <span
-                  className="
-                    text-[10px]
-                    font-medium
-                    text-indigo-300/60
-                  "
-                >
-                  Resend in {timeLeft}s
-                </span>
-
-              ) : (
-
-                <button
-                  type="button"
-                  onClick={resendOTP}
-                  className="
+                    mx-auto
                     flex
+                    min-h-[90vh]
+                    w-full
+                    max-w-md
                     items-center
-                    gap-1.5
-                    text-[10px]
-                    font-medium
-                    text-indigo-300
-                    transition
-                    hover:text-indigo-200
-                  "
-                >
-                  <RefreshCw
-                    size={12}
-                    strokeWidth={1.7}
-                  />
+                    justify-center
+                "
+            >
+                <div className="w-full">
 
-                  Resend code
-                </button>
+                    <div className="mb-8 text-center">
 
-              )}
+                        <div
+                            className="
+                                mx-auto
+                                mb-6
+                                flex
+                                h-14
+                                w-14
+                                items-center
+                                justify-center
+                                rounded-full
+                                border
+                                border-blue-400/10
+                                bg-blue-500/[0.08]
+                                text-indigo-200
+                            "
+                        >
+                            <Mail
+                                size={22}
+                                strokeWidth={1.5}
+                            />
+                        </div>
 
+                        <p
+                            className="
+                                mb-2
+                                text-[10px]
+                                uppercase
+                                tracking-[0.25em]
+                                text-indigo-300/45
+                            "
+                        >
+                            Verify your email
+                        </p>
+
+                        <h1
+                            className="
+                                text-2xl
+                                font-semibold
+                            "
+                        >
+                            Check your inbox
+                        </h1>
+
+                        <p
+                            className="
+                                mx-auto
+                                mt-3
+                                text-cnter
+                                text-[12px]
+                                leading-5
+                                text-white/35
+                            "
+                        >
+                            We sent a 6-digit
+                            verification code to
+                        </p>
+
+                        <p
+                            className="
+                                mt-1
+                                break-all
+                                text-[12px]
+                                text-indigo-300/80
+                            "
+                        >
+                            {email}
+                        </p>
+                    </div>
+
+                    {resendMessage && ( 
+                        <p className="mt-3 text-center text-sm text-green-400"> {resendMessage} </p>
+                    )} 
+                    {resendError && ( 
+                        <p className="mt-3 text-center text-sm text-red-400"> {resendError} </p> 
+                    )}
+
+                    {error && (
+                        <div
+                            className="
+                                mb-5
+                                rounded-xl
+                                border
+                                border-red-400/20
+                                bg-red-500/[0.06]
+                                px-4
+                                py-3
+                                text-[11px]
+                                text-red-300
+                            "
+                        >
+                            {error}
+                        </div>
+                    )}
+
+                    <form
+                        onSubmit={handleSubmit}
+                    >
+                        <label
+                            htmlFor="otp"
+                            className="
+                                block
+                                text-[11px]
+                                font-medium
+                                text-indigo-200/90
+                            "
+                        >
+                            Verification code
+                        </label>
+
+                        <input
+                            id="otp"
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            value={otp}
+                            onChange={handleChange}
+                            autoFocus
+                            placeholder="000000"
+                            className="
+                                mt-3
+                                h-14
+                                w-full
+                                rounded-xl
+                                border
+                                border-white/[0.08]
+                                bg-white/[0.025]
+                                text-center
+                                text-xl
+                                tracking-[0.45em]
+                                text-white
+                                outline-none
+                                transition
+                                focus:border-indigo-400/40
+                                focus:bg-indigo-500/[0.04]
+                                placeholder:text-white/15
+                            "
+                        />
+
+                        <div className="mt-5 flex items-center justify-between">
+                            <div></div>
+                            <button
+                                type="button"
+                                onClick={handleResendOTP}
+                                disabled={resending}
+                                className="text-sm text-white/70 hover:text-white disabled:opacity-50"
+                            >
+                                {resending
+                                    ? "Sending..."
+                                    : "Resend code"}
+                            </button>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={
+                                loading ||
+                                otp.length !== 6
+                            }
+                            className="
+                                mt-6
+                                flex
+                                h-[52px]
+                                w-full
+                                items-center
+                                justify-center
+                                gap-2.5
+                                rounded-[17px]
+                                bg-gradient-to-r
+                                from-[#5535ff]
+                                via-[#7438ff]
+                                to-[#a333ff]
+                                text-[13px]
+                                font-medium
+                                shadow-[0_12px_35px_rgba(112,61,255,0.30)]
+                                transition
+                                disabled:cursor-not-allowed
+                                disabled:opacity-50
+                            "
+                        >
+
+                      
+                            
+                          {loading ? (
+                                  <>
+                                      <span
+                                          className="
+                                              h-4
+                                              w-4
+                                              animate-spin
+                                              rounded-full
+                                              border-2
+                                              border-white/30
+                                              border-t-white
+                                          "
+                                      />
+
+                                      Verifying...
+                                  </>
+                            ) : (
+                                <>
+                                    Verify email
+                                    <Check
+                                        size={16}
+                                    />
+                                </>
+                            )
+                          }
+                        </button>
+                    </form>
+
+                    <div className="mt-7 text-center">
+                        <Link
+                            to="/signup"
+                            className="
+                                inline-flex
+                                items-center
+                                gap-2
+                                text-[11px]
+                                text-white/35
+                                transition
+                                hover:text-white
+                            "
+                        >
+                            <ArrowLeft size={14} />
+                            Back to signup
+                        </Link>
+                    </div>
+
+                </div>
             </div>
-
-            {/* ================================================= */}
-            {/* VERIFY BUTTON */}
-            {/* ================================================= */}
-
-            <button
-              type="submit"
-              disabled={!isComplete || isVerifying}
-              className={`
-                group
-                relative
-                mt-8
-                flex
-                h-[52px]
-                w-full
-                items-center
-                justify-center
-                gap-2.5
-                overflow-hidden
-                rounded-[17px]
-                bg-gradient-to-r
-                from-[#5535ff]
-                via-[#7438ff]
-                to-[#a333ff]
-                text-[13px]
-                font-medium
-                shadow-[0_12px_35px_rgba(112,61,255,0.30)]
-                transition
-                duration-200
-                ${
-                  !isComplete || isVerifying
-                    ? "cursor-not-allowed opacity-40"
-                    : "hover:scale-[1.01] hover:shadow-[0_15px_45px_rgba(112,61,255,0.42)] active:scale-[0.98]"
-                }
-              `}
-            >
-
-              {isVerifying ? (
-                <>
-                  <RefreshCw
-                    size={16}
-                    strokeWidth={1.8}
-                    className="animate-spin"
-                  />
-
-                  Verifying...
-                </>
-              ) : (
-                <>
-                  Verify account
-
-                  <ArrowRight
-                    size={16}
-                    strokeWidth={1.8}
-                  />
-                </>
-              )}
-
-            </button>
-
-          </form>
-
-          {/* ================================================= */}
-          {/* BACK */}
-          {/* ================================================= */}
-
-          <div className="mt-7 text-center">
-
-            <button
-              type="button"
-              className="
-                inline-flex
-                items-center
-                gap-2
-                text-[11px]
-                text-white/30
-                transition
-                hover:text-white/70
-              "
-            >
-
-              <ArrowLeft
-                size={14}
-                strokeWidth={1.6}
-              />
-
-              Back to sign up
-
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </main>
-  );
+        </main>
+    );
 }

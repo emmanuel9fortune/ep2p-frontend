@@ -8,13 +8,79 @@ import {
   Check,
   Grid2X2,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../services/authService";
+import { useAuth } from "./authContext";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
   const appName = import.meta.env.VITE_APP_NAME;
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    setError("");
+
+    if (!email.trim()) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter your password.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const data = await loginUser({
+        email,
+        password,
+      });
+
+      console.log("LOGIN RESPONSE:", data);
+
+      if (!data?.token) {
+        throw new Error(
+          "Login succeeded, but no access token was returned."
+        );
+      }
+
+      login({
+        user: data.user,
+        accessToken: data.token,
+      });
+
+      console.log(
+        "LOGIN TOKEN:",
+        sessionStorage.getItem("accessToken")
+      );
+
+      navigate("/dashboard", {
+        replace: true,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+
+      setError(
+        error.message ||
+          "Unable to login. Please check your details."
+      );
+    } finally {
+      setLoading(false);
+    }
+};
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050a18] text-white w-full">
@@ -296,7 +362,9 @@ export default function Login() {
                 FORM
             ===================================================== */}
 
-            <form className="mt-9">
+            <form 
+              className="mt-9"
+              onSubmit={handleSubmit}>
 
 
               {/* =================================================
@@ -358,6 +426,8 @@ export default function Login() {
                       type="email"
                       placeholder="Enter your email address"
                       autoComplete="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       className="
                         mt-1
                         block
@@ -437,6 +507,8 @@ export default function Login() {
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       className="
                         mt-1
                         block
@@ -536,12 +608,18 @@ export default function Login() {
               </div>
 
 
+              {error && (
+                <p className="mt-4 text-center text-sm text-red-400">
+                  {error}
+                </p>
+              )}
               {/* =================================================
                   LOGIN BUTTON
               ================================================= */}
 
               <button
                 type="submit"
+                disabled={loading}
                 className="
                   group
                   relative
@@ -593,7 +671,7 @@ export default function Login() {
                 />
 
                 <span className="relative">
-                  Login
+                  {loading ? "Logging in..." : "Login"}
                 </span>
 
               </button>
