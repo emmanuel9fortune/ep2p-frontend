@@ -18,43 +18,64 @@ export function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      if (!accessToken) {
-        setUser(null);
-        return;
-      }
+        const token =
+            sessionStorage.getItem("accessToken");
 
-      const response = await fetch(
-        `${API_URL}/api/auth/me`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+        console.log("AUTH TOKEN:", token);
+
+        if (!token) {
+            console.log("NO ACCESS TOKEN FOUND");
+
+            setUser(null);
+            return;
         }
-      );
 
-      if (!response.ok) {
-        setUser(null);
-        setAccessToken(null);
-        sessionStorage.removeItem("accessToken");
-        return;
-      }
+        const response = await fetch(
+            `${API_URL}/api/auth/me`,
+            {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            }
+        );
 
-      const data = await response.json();
+        console.log(
+            "ME STATUS:",
+            response.status
+        );
 
-      setUser(data.user);
+        const data = await response.json();
+
+        console.log(
+            "ME RESPONSE:",
+            data
+        );
+
+        if (!response.ok) {
+            setUser(null);
+            setAccessToken(null);
+
+            sessionStorage.removeItem(
+                "accessToken"
+            );
+
+            return;
+        }
+
+        setUser(data.user);
 
     } catch (error) {
-      console.error(
-        "Authentication check failed:",
-        error
-      );
+        console.error(
+            "Authentication check failed:",
+            error
+        );
 
-      setUser(null);
+        setUser(null);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
+};
 
   useEffect(() => {
     checkAuth();
