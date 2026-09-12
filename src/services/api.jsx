@@ -9,14 +9,25 @@ export async function apiRequest(endpoint, options = {}) {
         ...rest
     } = options;
 
+    const accessToken =
+        sessionStorage.getItem("accessToken");
+
+    const authHeaders = accessToken
+        ? {
+              Authorization: `Bearer ${accessToken}`,
+          }
+        : {};
+
     const response = await fetch(
         `${API_URL}${endpoint}`,
         {
             method,
-            credentials: "include",
 
             headers: {
-                "Content-Type": "application/json",
+                "Content-Type":
+                    "application/json",
+
+                ...authHeaders,
                 ...headers,
             },
 
@@ -39,7 +50,7 @@ export async function apiRequest(endpoint, options = {}) {
     if (!response.ok) {
         const error = new Error(
             data.message ||
-            "Something went wrong"
+                "Something went wrong"
         );
 
         error.status = response.status;
